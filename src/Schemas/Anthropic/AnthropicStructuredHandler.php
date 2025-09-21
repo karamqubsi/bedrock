@@ -52,7 +52,6 @@ class AnthropicStructuredHandler extends BedrockStructuredHandler
         );
 
         $request->addMessage($responseMessage);
-        $this->responseBuilder->addResponseMessage($responseMessage);
 
         $this->responseBuilder->addStep(new Step(
             text: $this->tempResponse->text,
@@ -100,13 +99,12 @@ class AnthropicStructuredHandler extends BedrockStructuredHandler
 
         $this->tempResponse = new StructuredResponse(
             steps: new Collection,
-            responseMessages: new Collection,
             text: $this->extractText($data),
             structured: [],
             finishReason: FinishReasonMap::map(data_get($data, 'stop_reason', '')),
             usage: new Usage(
-                promptTokens: data_get($data, 'usage.input_tokens'),
-                completionTokens: data_get($data, 'usage.output_tokens'),
+                promptTokens: data_get($data, 'usage.input_tokens', 0),
+                completionTokens: data_get($data, 'usage.output_tokens', 0),
                 cacheWriteInputTokens: data_get($data, 'usage.cache_creation_input_tokens', null),
                 cacheReadInputTokens: data_get($data, 'usage.cache_read_input_tokens', null)
             ),

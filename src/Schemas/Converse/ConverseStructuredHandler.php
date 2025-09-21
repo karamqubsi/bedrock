@@ -49,7 +49,6 @@ class ConverseStructuredHandler extends BedrockStructuredHandler
         );
 
         $request->addMessage($responseMessage);
-        $this->responseBuilder->addResponseMessage($responseMessage);
 
         $this->responseBuilder->addStep(new Step(
             text: $this->tempResponse->text,
@@ -104,13 +103,12 @@ class ConverseStructuredHandler extends BedrockStructuredHandler
 
         $this->tempResponse = new StructuredResponse(
             steps: new Collection,
-            responseMessages: new Collection,
             text: data_get($data, 'output.message.content.0.text', ''),
             structured: [],
-            finishReason: FinishReasonMap::map(data_get($data, 'stopReason')),
+            finishReason: FinishReasonMap::map(data_get($data, 'stopReason', '')),
             usage: new Usage(
-                promptTokens: data_get($data, 'usage.inputTokens'),
-                completionTokens: data_get($data, 'usage.outputTokens')
+                promptTokens: data_get($data, 'usage.inputTokens', 0),
+                completionTokens: data_get($data, 'usage.outputTokens', 0)
             ),
             meta: new Meta(id: '', model: '') // Not provided in Converse response.
 

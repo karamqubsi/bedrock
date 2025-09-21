@@ -54,14 +54,12 @@ class ConverseTextHandler extends BedrockTextHandler
             $this->tempResponse->additionalContent,
         );
 
-        $this->responseBuilder->addResponseMessage($responseMessage);
-
         $request->addMessage($responseMessage);
 
         return match ($this->tempResponse->finishReason) {
             FinishReason::ToolCalls => $this->handleToolCalls($request),
-            FinishReason::Stop, FinishReason::Length => $this->handleStop($request),
-            default => throw new PrismException('Anthropic: unknown finish reason'),
+            FinishReason::Stop, FinishReason::Length, FinishReason::Unknown => $this->handleStop($request),
+            default => throw new PrismException('Bedrock Converse: unknown finish reason - '.$this->tempResponse->finishReason->name),
         };
     }
 
@@ -111,17 +109,16 @@ class ConverseTextHandler extends BedrockTextHandler
 
         $this->tempResponse = new TextResponse(
             steps: new Collection,
-            responseMessages: new Collection,
-            messages: new Collection,
             text: data_get($data, 'output.message.content.0.text', ''),
-            finishReason: FinishReasonMap::map(data_get($data, 'stopReason')),
+            finishReason: FinishReasonMap::map(data_get($data, 'stopReason', '')),
             toolCalls: $this->extractToolCalls($data),
             toolResults: [],
             usage: new Usage(
-                promptTokens: data_get($data, 'usage.inputTokens'),
-                completionTokens: data_get($data, 'usage.outputTokens')
+                promptTokens: data_get($data, 'usage.inputTokens', 0),
+                completionTokens: data_get($data, 'usage.outputTokens', 0)
             ),
-            meta: new Meta(id: '', model: '') // Not provided in Converse response.
+            meta: new Meta(id: '', model: ''), // Not provided in Converse response.
+            messages: new Collection
         );
     }
 

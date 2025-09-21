@@ -55,14 +55,12 @@ class AnthropicTextHandler extends BedrockTextHandler
             $this->tempResponse->additionalContent,
         );
 
-        $this->responseBuilder->addResponseMessage($responseMessage);
-
         $request->addMessage($responseMessage);
 
         return match ($this->tempResponse->finishReason) {
             FinishReason::ToolCalls => $this->handleToolCalls($request),
-            FinishReason::Stop, FinishReason::Length => $this->handleStop($request),
-            default => throw new PrismException('Anthropic: unknown finish reason'),
+            FinishReason::Stop, FinishReason::Length, FinishReason::Unknown => $this->handleStop($request),
+            default => throw new PrismException('Bedrock Anthropic: unknown finish reason - '.$this->tempResponse->finishReason->name),
         };
     }
 
@@ -101,22 +99,21 @@ class AnthropicTextHandler extends BedrockTextHandler
 
         $this->tempResponse = new TextResponse(
             steps: new Collection,
-            responseMessages: new Collection,
-            messages: new Collection,
             text: $this->extractText($data),
             finishReason: FinishReasonMap::map(data_get($data, 'stop_reason', '')),
             toolCalls: $this->extractToolCalls($data),
             toolResults: [],
             usage: new Usage(
-                promptTokens: data_get($data, 'usage.input_tokens'),
-                completionTokens: data_get($data, 'usage.output_tokens'),
+                promptTokens: data_get($data, 'usage.input_tokens', 0),
+                completionTokens: data_get($data, 'usage.output_tokens', 0),
                 cacheWriteInputTokens: data_get($data, 'usage.cache_creation_input_tokens'),
                 cacheReadInputTokens: data_get($data, 'usage.cache_read_input_tokens')
             ),
             meta: new Meta(
                 id: data_get($data, 'id'),
                 model: data_get($data, 'model'),
-            )
+            ),
+            messages: new Collection
         );
     }
 

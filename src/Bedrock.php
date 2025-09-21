@@ -121,13 +121,16 @@ class Bedrock extends Provider
             ? false
             : $request->providerOptions('enableCaching') ?? false;
 
+        $encodedModel = urlencode($model);
+        $baseUrl = "https://bedrock-runtime.{$this->region}.amazonaws.com/model/$encodedModel/";
+
         return $this->baseClient()
             ->acceptJson()
             ->withHeader('explicitPromptCaching', $enableCaching ? 'enabled' : 'disabled')
             ->contentType('application/json')
             ->withOptions($options)
             ->retry(...$retry)
-            ->baseUrl("https://bedrock-runtime.{$this->region}.amazonaws.com/model/$model/")
+            ->baseUrl($baseUrl)
             ->beforeSending(function (Request $request) {
                 $request = $request->toPsrRequest();
 
